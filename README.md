@@ -1,6 +1,8 @@
 # Mapper demo
 This project demonstrates a .NET Source Generator that generates mappers for you.
 
+## Example
+
 Input
 
 ```cs
@@ -274,3 +276,11 @@ namespace MapperDemo
 ```
 
 ## Result
+
+<img width="1720" height="732" alt="afbeelding" src="https://github.com/user-attachments/assets/fdf774c4-3fbd-4fe0-960a-69879839d3f0" />
+
+As you can see from the image, you can
+- Change property names
+- Remap property types (`double` &#2194; `string`)
+
+With a minimum of code.
