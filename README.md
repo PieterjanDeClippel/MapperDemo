@@ -281,6 +281,6 @@ namespace MapperDemo
 
 As you can see from the image, you can
 - Change property names
-- Remap property types (`double` &#2194; `string`)
+- Remap property types (`double` ↔ `string`)
 
 With a minimum of code.
