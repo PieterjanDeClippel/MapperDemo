@@ -1,7 +1,42 @@
 ﻿// See https://aka.ms/new-console-template for more information
+using MapperDemo;
 using MintPlayer.Mapper.Attributes;
+using System.Diagnostics;
 
-Console.WriteLine("Hello, World!");
+var person = new Person
+{
+    FirstName = "John",
+    LastName = "Doe",
+    MainAddress = new Address
+    {
+        Street = "123 Main St",
+        City = "Anytown",
+        Country = "USA",
+        Extras = ["Near the park", "Blue house"],
+    },
+    ContactInfos =
+    [
+        new ContactInfo
+        {
+            ContactType = EContactType.Email,
+            Value = "info@example.com",
+        },
+        new ContactInfo
+        {
+            ContactType = EContactType.Phone,
+            Value = "+1 23/45.67.89",
+        },
+    ],
+    Notes =
+    [
+        "Note 1",
+        "Note 2",
+    ],
+    Weight = 70.5,
+};
+
+var dto = person.MapToPersonDto();
+Debugger.Break();
 
 [GenerateMapper(typeof(PersonDto))]
 public class Person
@@ -20,6 +55,9 @@ public class Person
 
     [MapperAlias(nameof(PersonDto.ContactGegevens))]
     public ContactInfo[] ContactInfos { get; set; }
+
+    [MapperAlias(nameof(PersonDto.Gewicht))]
+    public double Weight { get; set; }
 }
 
 public class PersonDto
@@ -29,6 +67,8 @@ public class PersonDto
     public AddressDto HoofdAdres { get; set; }
     public List<string> Notities { get; set; }
     public ContactInfoDto[] ContactGegevens { get; set; }
+
+    public string Gewicht { get; set; }
 }
 
 [GenerateMapper(typeof(AddressDto))]
@@ -76,4 +116,38 @@ public class ContactInfoDto
 {
     public EContactType Type { get; set; }
     public string Waarde { get; set; }
+}
+
+
+public static class Conversions
+{
+    [MapperConversion]
+    public static int? StringToNullableInt(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
+        if (int.TryParse(input, out int result))
+            return result;
+        return null;
+    }
+
+    [MapperConversion]
+    public static string? NullableIntToString(int? input)
+    {
+        return input?.ToString();
+    }
+
+    [MapperConversion]
+    public static double StringToDouble(string input)
+    {
+        if (double.TryParse(input, out double result))
+            return result;
+        return 0;
+    }
+
+    [MapperConversion]
+    public static string DoubleToString(double input)
+    {
+        return input.ToString();
+    }
 }

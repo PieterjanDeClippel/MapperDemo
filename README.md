@@ -4,10 +4,40 @@ This project demonstrates a .NET Source Generator that generates mappers for you
 Input
 
 ```cs
-// See https://aka.ms/new-console-template for more information
-using MintPlayer.Mapper.Attributes;
+var person = new Person
+{
+    FirstName = "John",
+    LastName = "Doe",
+    MainAddress = new Address
+    {
+        Street = "123 Main St",
+        City = "Anytown",
+        Country = "USA",
+        Extras = ["Near the park", "Blue house"],
+    },
+    ContactInfos =
+    [
+        new ContactInfo
+        {
+            ContactType = EContactType.Email,
+            Value = "info@example.com",
+        },
+        new ContactInfo
+        {
+            ContactType = EContactType.Phone,
+            Value = "+1 23/45.67.89",
+        },
+    ],
+    Notes =
+    [
+        "Note 1",
+        "Note 2",
+    ],
+    Weight = 70.5,
+};
 
-Console.WriteLine("Hello, World!");
+var dto = person.MapToPersonDto();
+Debugger.Break();
 
 [GenerateMapper(typeof(PersonDto))]
 public class Person
@@ -26,6 +56,9 @@ public class Person
 
     [MapperAlias(nameof(PersonDto.ContactGegevens))]
     public ContactInfo[] ContactInfos { get; set; }
+
+    [MapperAlias(nameof(PersonDto.Gewicht))]
+    public double Weight { get; set; }
 }
 
 public class PersonDto
@@ -35,6 +68,8 @@ public class PersonDto
     public AddressDto HoofdAdres { get; set; }
     public List<string> Notities { get; set; }
     public ContactInfoDto[] ContactGegevens { get; set; }
+
+    public string Gewicht { get; set; }
 }
 
 [GenerateMapper(typeof(AddressDto))]
@@ -83,6 +118,40 @@ public class ContactInfoDto
     public EContactType Type { get; set; }
     public string Waarde { get; set; }
 }
+
+
+public static class Conversions
+{
+    [MapperConversion]
+    public static int? StringToNullableInt(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
+        if (int.TryParse(input, out int result))
+            return result;
+        return null;
+    }
+
+    [MapperConversion]
+    public static string? NullableIntToString(int? input)
+    {
+        return input?.ToString();
+    }
+
+    [MapperConversion]
+    public static double StringToDouble(string input)
+    {
+        if (double.TryParse(input, out double result))
+            return result;
+        return 0;
+    }
+
+    [MapperConversion]
+    public static string DoubleToString(double input)
+    {
+        return input.ToString();
+    }
+}
 ```
 
 Generated code
@@ -92,26 +161,55 @@ namespace MapperDemo
 {
     public static class MapperExtensions
     {
+        public static TDest? ConvertProperty<TSource, TDest>(TSource? source)
+        {
+            if (source is null)
+                return default;
+            
+            object? result;
+            
+            switch ((typeof(TSource), typeof(TDest)))
+            {
+                case (global::System.Type sourceType, global::System.Type destType) when sourceType == typeof(string) && destType == typeof(int?):
+                    result = global::Conversions.StringToNullableInt((string)(object)source);
+                    break;
+                case (global::System.Type sourceType, global::System.Type destType) when sourceType == typeof(int?) && destType == typeof(string):
+                    result = global::Conversions.NullableIntToString((int?)(object)source);
+                    break;
+                case (global::System.Type sourceType, global::System.Type destType) when sourceType == typeof(string) && destType == typeof(double):
+                    result = global::Conversions.StringToDouble((string)(object)source);
+                    break;
+                case (global::System.Type sourceType, global::System.Type destType) when sourceType == typeof(double) && destType == typeof(string):
+                    result = global::Conversions.DoubleToString((double)(object)source);
+                    break;
+                default:
+                    throw new NotSupportedException($"Conversion from {typeof(TSource)} to {typeof(TDest)} is not supported.");
+            }
+            
+            return (TDest?)(object?)result;
+        }
         public static global::Person MapToPerson(this global::PersonDto input)
         {
             return new global::Person()
             {
-                FirstName = input.Voornaam,
-                LastName = input.Achternaam,
-                MainAddress = input.HoofdAdres.MapToAddress(),
+                Name = input.Naam,
+                Age = input.Leeftijd,
+                Address = input.Adres.MapToAddress(),
+                ContactInfos = input.Contactgegevens == null ? null : input.Contactgegevens.Select(x => x.MapToContactInfo()).ToList(),
                 Notes = input.Notities == null ? null : input.Notities.ToList(),
-                ContactInfos = input.ContactGegevens == null ? null : input.ContactGegevens.Select(x => x.MapToContactInfo()).ToArray(),
+                Weight = ConvertProperty<string, double>(input.Gewicht),
             };
         }
         public static global::PersonDto MapToPersonDto(this global::Person input)
         {
             return new global::PersonDto()
             {
-                Voornaam = input.FirstName,
-                Achternaam = input.LastName,
-                HoofdAdres = input.MainAddress.MapToAddressDto(),
+                Naam = input.Name,
+                Leeftijd = input.Age,
+                Adres = input.Address.MapToAddressDto(),
+                Contactgegevens = input.ContactInfos == null ? null : input.ContactInfos.Select(x => x.MapToContactInfoDto()).ToList(),
                 Notities = input.Notes == null ? null : input.Notes.ToList(),
-                ContactGegevens = input.ContactInfos == null ? null : input.ContactInfos.Select(x => x.MapToContactInfoDto()).ToArray(),
+                Gewicht = ConvertProperty<double, string>(input.Weight),
             };
         }
         public static global::System.Collections.Generic.IEnumerable<global::Person> MapToPerson(this global::System.Collections.Generic.IEnumerable<global::PersonDto> input)
@@ -126,20 +224,16 @@ namespace MapperDemo
         {
             return new global::Address()
             {
-                Street = input.Straat,
+                Street = input.Straatnaam,
                 City = input.Stad,
-                Country = input.Land,
-                Extras = input.Extras == null ? null : input.Extras.ToList(),
             };
         }
         public static global::AddressDto MapToAddressDto(this global::Address input)
         {
             return new global::AddressDto()
             {
-                Straat = input.Street,
+                Straatnaam = input.Street,
                 Stad = input.City,
-                Land = input.Country,
-                Extras = input.Extras == null ? null : input.Extras.ToList(),
             };
         }
         public static global::System.Collections.Generic.IEnumerable<global::Address> MapToAddress(this global::System.Collections.Generic.IEnumerable<global::AddressDto> input)
@@ -150,30 +244,33 @@ namespace MapperDemo
         {
             return input.Select(x => x.MapToAddressDto());
         }
-        public static global::ContactInfo MapToContactInfo(this global::ContactInfoDto input)
-        {
-            return new global::ContactInfo()
-            {
-                ContactType = input.Type,
-                Value = input.Waarde,
-            };
-        }
         public static global::ContactInfoDto MapToContactInfoDto(this global::ContactInfo input)
         {
             return new global::ContactInfoDto()
             {
-                Type = input.ContactType,
+                Soort = input.Type,
                 Waarde = input.Value,
             };
         }
-        public static global::System.Collections.Generic.IEnumerable<global::ContactInfo> MapToContactInfo(this global::System.Collections.Generic.IEnumerable<global::ContactInfoDto> input)
+        public static global::ContactInfo MapToContactInfo(this global::ContactInfoDto input)
         {
-            return input.Select(x => x.MapToContactInfo());
+            return new global::ContactInfo()
+            {
+                Type = input.Soort,
+                Value = input.Waarde,
+            };
         }
         public static global::System.Collections.Generic.IEnumerable<global::ContactInfoDto> MapToContactInfoDto(this global::System.Collections.Generic.IEnumerable<global::ContactInfo> input)
         {
             return input.Select(x => x.MapToContactInfoDto());
         }
+        public static global::System.Collections.Generic.IEnumerable<global::ContactInfo> MapToContactInfo(this global::System.Collections.Generic.IEnumerable<global::ContactInfoDto> input)
+        {
+            return input.Select(x => x.MapToContactInfo());
+        }
     }
 }
+
 ```
+
+## Result
