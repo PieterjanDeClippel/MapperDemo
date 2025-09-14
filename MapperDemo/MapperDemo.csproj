@@ -8,11 +8,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MintPlayer.Mapper" Version="6.3.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="MintPlayer.Mapper.Attributes" Version="6.2.0" />
+		<PackageReference Include="MintPlayer.SourceGenerators.Targets" Version="5.6.0" PrivateAssets="all" IncludeAssets="content" GeneratePathProperty="true" />
 	</ItemGroup>
 
+	<!-- We want to use the MapperGenerator -->
+	<Import Project="$(PkgMintPlayer_SourceGenerators_Targets)\content\mappergenerator.targets" />
 </Project>
