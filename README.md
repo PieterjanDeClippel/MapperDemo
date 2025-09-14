@@ -1,5 +1,5 @@
 # Mapper demo
-This project demonstrates a .NET Source Generator that generates mappers for you.
+This project demonstrates a [.NET Source Generator that generates mappers](https://github.com/MintPlayer/MintPlayer.Dotnet.Tools/tree/master/SourceGenerators/Mapper) for you.
 
 ## Example
 
